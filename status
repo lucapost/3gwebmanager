@@ -1,0 +1,117 @@
+#!/bin/sh
+cat <<END
+Content-Type: text/html; charset=UTF-8
+Pragma: no-cache
+
+END
+
+hostname="192.168.1.1"
+
+if test "X`grep 140c /proc/bus/usb/devices`" == "X"; then
+    usb_modeswitch >/dev/null
+    sleep 5
+fi
+#########################################################
+redirect(){
+cat <<end
+ <head>
+ <meta http-equiv="refresh" content="0; url=http://$hostname/cgi-bin/status"> 
+ </head>
+end
+}
+#########################################################
+time3g(){
+
+       timeip=`cat /tmp/timeip` 
+       timecurr=`date +%s`
+       
+       let sec=$timecurr-$timeip+120
+        
+       let "ore=$sec/3600"
+       let "min=( $sec - $ore * 3600) / 60"
+       let "sec=$sec%60"
+       
+       echo "$ore:$min:$sec -"
+       
+}
+#########################################################
+page(){
+
+cat <<END
+<html>
+<style type="text/css">
+body { font-size: 24pt; }
+a:link { COLOR: black; font-weight: normal }
+a:visited { COLOR: black; font-weight: normal }
+a:active { COLOR: black; }
+a:hover { COLOR: blue; font-weight: none }
+green { COLOR: green; font-weight: bold }
+red { COLOR: red; font-weight: bold }
+</style>
+<body>
+END
+
+   date "+%a %d %b %Y" 
+   echo " - "
+   uptime
+   
+cat <<END
+<hr/>
+<a href="http://$hostname/cgi-bin/luci">luci</a>
+<a href="http://$hostname/cgi-bin/status">update</a>
+<hr/>
+END
+
+if test ! "`date +%s`" = "1970" -a "`grep ppp0 /proc/net/dev`" ;then
+
+   time3g
+   
+cat <<END
+<green>3G IS UP</green> -
+<a href="http://$hostname/cgi-bin/status?stop">stop</a> - 
+<!-- <a href="http://www.alicemobile.mobi/" target="_blank">time</a> -->
+<a href="http://internet.tre.it/" target="_blank">time</a>
+<hr/>
+END
+   
+else
+
+cat <<END
+<red>3G IS DOWN</red> - 
+<a href="http://$hostname/cgi-bin/status?start">start</a>
+<hr/>
+END
+ 
+#   gcom -d /dev/ttyUSB0 reg |sed 's/.*/&\<br\/>/' |grep -v "Waiting"
+#   gcom -d /dev/ttyUSB0 sig |sed 's/.*/&\<br\/>/'
+#   echo "<hr/>"
+
+fi
+
+   echo "Il numero di client connessi e' `grep macadd /proc/net/madwifi/ath0/associated_sta |wc -l`"
+
+}
+
+if [ "$REQUEST_METHOD" = POST ]; then
+    query=$( head --bytes="$CONTENT_LENGTH" )
+else
+    query="$QUERY_STRING"
+fi
+
+case $query in
+   start)
+   /etc/init.d/wan restart
+   redirect
+   ;;
+   stop)
+   /etc/init.d/wan stop
+   redirect
+   ;;
+   *)
+   page
+   ;;
+esac
+
+cat <<end
+</body></html>
+end

@@ -1,0 +1,7 @@
+h1. 3g openwrt cgi script manager
+
+This is simple bash cgi script for manage 3g wan interface on openwrt based router.
+
+Put <code>status</code> to <code>/www/cgi-bin/status</code> and <code>wan</code> to <code>/etc/init.d/wan</code>.
+
+Make the scripts files executable, and point your web browser to "http://192.168.1.1/cgi-bin/status":http://192.168.1.1/cgi-bin/status.
